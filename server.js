@@ -8,14 +8,26 @@ const app = express();
 
 app.disable("x-powered-by");
 
-if (!fs.existsSync("./tmp")) {
-fs.mkdirSync("./tmp", { recursive: true });
+const TMP_DIR = path.join(__dirname, "tmp");
+
+if (!fs.existsSync(TMP_DIR)) {
+fs.mkdirSync(TMP_DIR, { recursive: true });
 }
 
+const storage = multer.diskStorage({
+destination: function (req, file, cb) {
+cb(null, TMP_DIR);
+},
+filename: function (req, file, cb) {
+const ext = path.extname(file.originalname || ".mp4");
+cb(null, Date.now() + ext);
+}
+});
+
 const upload = multer({
-dest: "./tmp",
+storage,
 limits: {
-fileSize: 100 * 1024 * 1024 // 100MB
+fileSize: 100 * 1024 * 1024
 }
 });
 
@@ -33,9 +45,11 @@ const job = queue.shift();
 try {
 const result = await enhanceVideo(job.filePath);
 
-if (fs.existsSync(job.filePath)) {
-  fs.unlinkSync(job.filePath);
-}
+try {
+  if (fs.existsSync(job.filePath)) {
+    fs.unlinkSync(job.filePath);
+  }
+} catch {}
 
 job.resolve({
   status: true,
@@ -44,9 +58,11 @@ job.resolve({
 
 } catch (err) {
 
-if (fs.existsSync(job.filePath)) {
-  fs.unlinkSync(job.filePath);
-}
+try {
+  if (fs.existsSync(job.filePath)) {
+    fs.unlinkSync(job.filePath);
+  }
+} catch {}
 
 job.reject(err);
 
@@ -59,7 +75,7 @@ processQueue();
 app.get("/", (req, res) => {
 res.json({
 status: true,
-service: "DanzClean Unblur Worker",
+service: "DanzClean HD Video Worker",
 queue: queue.length,
 processing
 });
@@ -109,9 +125,11 @@ return res.status(500).json({
 
 app.use((err, req, res, next) => {
 
+try {
 if (req.file?.path && fs.existsSync(req.file.path)) {
 fs.unlinkSync(req.file.path);
 }
+} catch {}
 
 return res.status(500).json({
 status: false,
