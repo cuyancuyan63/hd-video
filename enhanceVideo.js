@@ -80,8 +80,7 @@ const res = await axios.get(
 "${API}${endpoint}",
 {
 headers: headers({
-"content-type":
-"application/json; charset=UTF-8"
+"content-type": "application/json; charset=UTF-8"
 }),
 validateStatus: () => true
 }
@@ -94,9 +93,7 @@ data: res.data
 }
 
 async function createUploadUrl(filePath) {
-
-const fileName =
-path.basename(filePath);
+const fileName = path.basename(filePath);
 
 const result = await postForm(
 "/api/web/common/upload/video",
@@ -110,18 +107,14 @@ result.status >= 400 ||
 result.data?.code !== 100000
 ) {
 throw new Error(
-"Gagal mengambil upload url"
+JSON.stringify(result.data)
 );
 }
 
 return result.data.result;
 }
 
-async function uploadVideo(
-uploadUrl,
-filePath
-) {
-
+async function uploadVideo(uploadUrl, filePath) {
 const stat =
 await fsp.stat(filePath);
 
@@ -145,20 +138,14 @@ validateStatus: () => true
 return res.status;
 }
 
-async function createJob(
-originalVideoUrl
-) {
-
+async function createJob(originalVideoUrl) {
 const result = await postForm(
 "/api/web/unblurimage/v1/video-enhancer/create-job",
 {
-original_video_url:
-originalVideoUrl,
-
-  resolution: RESOLUTION,
-  is_preview: IS_PREVIEW
+original_video_url: originalVideoUrl,
+resolution: RESOLUTION,
+is_preview: IS_PREVIEW
 }
-
 );
 
 if (
@@ -166,7 +153,7 @@ result.status >= 400 ||
 !result.data?.result?.job_id
 ) {
 throw new Error(
-"Gagal membuat job"
+JSON.stringify(result.data)
 );
 }
 
@@ -174,11 +161,9 @@ return result.data.result;
 }
 
 async function getJob(jobId) {
-
 return await getJson(
 "/api/web/unblurimage/v1/video-enhancer/get-job/${jobId}"
 );
-
 }
 
 function sleep(ms) {
@@ -192,12 +177,7 @@ jobId,
 maxTry = 80,
 delay = 5000
 ) {
-
-for (
-let i = 0;
-i < maxTry;
-i++
-) {
+for (let i = 0; i < maxTry; i++) {
 
 const result =
   await getJob(jobId);
@@ -216,19 +196,13 @@ await sleep(delay);
 
 }
 
-throw new Error(
-"Job timeout"
-);
+throw new Error("Job timeout");
 }
 
-async function enhanceVideo(
-filePath
-) {
+async function enhanceVideo(filePath) {
 
 const upload =
-await createUploadUrl(
-filePath
-);
+await createUploadUrl(filePath);
 
 const signedUrl =
 upload.url;
@@ -244,19 +218,15 @@ filePath
 
 if (uploaded >= 400) {
 throw new Error(
-"Upload gagal"
+"Upload gagal (${uploaded})"
 );
 }
 
 const job =
-await createJob(
-publicUrl
-);
+await createJob(publicUrl);
 
 const resultUrl =
-await waitJob(
-job.job_id
-);
+await waitJob(job.job_id);
 
 return {
 Result_url: resultUrl
