@@ -43,9 +43,9 @@ return "application/octet-stream";
 
 function headers(extra = {}) {
 return {
-accept: "/",
+accept: "*/*",
 origin: WEB,
-referer: "${WEB}/",
+referer: `${WEB}/`,
 "user-agent": UA,
 "product-code": PRODUCT_CODE,
 "product-serial": PRODUCT_SERIAL,
@@ -62,7 +62,7 @@ form.append(key, value);
 }
 
 const res = await axios.post(
-"${API}${endpoint}",
+`${API}${endpoint}`,
 form,
 {
 headers: headers(form.getHeaders()),
@@ -78,7 +78,7 @@ data: res.data
 
 async function getJson(endpoint) {
 const res = await axios.get(
-"${API}${endpoint}",
+`${API}${endpoint}`,
 {
 headers: headers({
 "content-type": "application/json; charset=UTF-8"
@@ -163,7 +163,7 @@ return result.data.result;
 
 async function getJob(jobId) {
 return await getJson(
-"/api/web/unblurimage/v1/video-enhancer/get-job/${jobId}"
+`/api/web/unblurimage/v1/video-enhancer/get-job/${jobId}`
 );
 }
 
@@ -219,7 +219,7 @@ filePath
 
 if (uploaded >= 400) {
 throw new Error(
-"Upload gagal (${uploaded})"
+`Upload gagal (${uploaded})`
 );
 }
 
